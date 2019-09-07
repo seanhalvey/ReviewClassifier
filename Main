@@ -1,0 +1,95 @@
+import pandas as pd
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from random import seed
+from random import random
+from sklearn.neural_network import MLPClassifier
+
+realfile = open("real_reviews.txt","r+",encoding="utf8") 
+reallist = realfile.readlines()
+fakefile = open("fake_reviews.txt","r+",encoding="utf8") 
+fakelist = fakefile.readlines()
+
+realdf = pd.DataFrame(data=reallist, index=None, columns=["Review"]) 
+fakedf = pd.DataFrame(data=fakelist, index=None, columns=["Review"]) 
+
+count_rowreal = realdf.shape[0]
+count_rowfake = fakedf.shape[0]
+count_row = count_rowreal + count_rowfake
+rows= np.arange(0,count_row,1) 
+rowsreal= np.arange(0,count_rowreal,1)
+rowsfake= np.arange(0,count_rowfake,1)
+reallab= [1]*count_rowreal
+fakelab= [0]*count_rowfake
+realdf['RF'] = reallab
+fakedf['RF'] = fakelab
+
+df = pd.concat([realdf, fakedf])
+
+seed(0)
+sorder = []
+for i in rows:
+    x = random()
+    sorder.append(x)
+
+df["sort"] = sorder
+df = df.sort_values(by="sort")
+df = df.reset_index(drop=True)
+
+X_train = []
+X_test = []
+X_valid =[]
+y_train =[]
+y_test =[]
+y_valid =[]
+
+for i in rows:
+    if df.iloc[i]["sort"]<0.7:
+        x = df.iloc[i]["Review"]
+        y = df.iloc[i]["RF"]
+        X_train.append(x)
+        y_train.append(y)
+    if df.iloc[i]["sort"]>0.7 and df.iloc[i]["sort"]<0.85:
+        x = df.iloc[i]["Review"]
+        y = df.iloc[i]["RF"]
+        X_test.append(x)
+        y_test.append(y)
+    if df.iloc[i]["sort"]>0.85:
+        x = df.iloc[i]["Review"]
+        y = df.iloc[i]["RF"]
+        X_valid.append(x)
+        y_valid.append(y)
+        
+print(len(X_train))
+print(len(y_train))
+print(len(X_test))
+print(len(y_test))
+print(len(X_valid))
+print(len(y_valid))
+
+words = []
+for i in X_train:
+    i  = i.split(' ')
+    for j in i: 
+        if j not in words:
+            words.append(j)
+
+print(len(words))
+
+tfidf = TfidfVectorizer(max_df=1.0, max_features=None, min_df=5,ngram_range=(1, 6))
+X1 = tfidf.fit_transform(X_train)
+X2 = tfidf.transform(X_test)
+X3 = tfidf.transform(X_valid)
+print(tfidf)
+
+print(X1.shape)
+
+mlp = MLPClassifier()
+model = mlp.fit(X1, y_train)
+
+score = model.score(X2, y_test)
+print(score)
+
+
