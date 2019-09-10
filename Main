@@ -9,16 +9,17 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import classification_report
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
 
+
 realfile = open("real_reviews.txt","r+",encoding="utf8") 
 reallist = realfile.readlines()
 fakefile = open("fake_reviews.txt","r+",encoding="utf8") 
 fakelist = fakefile.readlines()
+
 
 realdf = pd.DataFrame(data=reallist, index=None, columns=["Review"]) 
 fakedf = pd.DataFrame(data=fakelist, index=None, columns=["Review"]) 
@@ -33,7 +34,6 @@ reallab= [1]*count_rowreal
 fakelab= [0]*count_rowfake
 realdf['RF'] = reallab
 fakedf['RF'] = fakelab
-
 df = pd.concat([realdf, fakedf])
 
 seed(0)
@@ -45,6 +45,7 @@ for i in rows:
 df["sort"] = sorder
 df = df.sort_values(by="sort")
 df = df.reset_index(drop=True)
+
 
 realreview=[]
 for i in df['Review']:
@@ -60,6 +61,7 @@ for i in realreview:
             realcount.append(j)
             
 print(len(realcount))
+
 
 freq = nltk.FreqDist(realreview)
 
@@ -117,6 +119,7 @@ for i in X_train:
 
 print(len(words))
 
+
 tfidf = TfidfVectorizer(max_df=1.0, max_features=None, min_df=5,ngram_range=(1, 6))
 X1 = tfidf.fit_transform(X_train)
 X2 = tfidf.transform(X_test)
@@ -125,32 +128,28 @@ print(tfidf)
 
 print(X1.shape)
 
+
 mlp = MLPClassifier()
 model = mlp.fit(X1, y_train)
 
+
 score = model.score(X2, y_test)
 print(score)
-
 y_pred = mlp.predict(X2)
- 
 print(classification_report(y_test, y_pred))
-
 scores = cross_val_score(mlp, X2, y_test, cv=5)
- 
 print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
 
 cm = confusion_matrix(y_test, y_pred)
 print(cm)
-
 cm_df = pd.DataFrame(cm,index = ['Fake','Real'], columns = ['Fake','Real'])
-
 plt.figure(figsize=(10,6))
 sns.heatmap(cm_df, annot=True,cmap="Greens",fmt="d")
 plt.title('MLP Classifier')
 plt.ylabel('Actual')
 plt.xlabel('Predicted')
 plt.show()
-
 y_pred1 = mlp.predict_proba(X2)
 
 def plot_roc_curve(fpr, tpr):
@@ -166,6 +165,5 @@ def plot_roc_curve(fpr, tpr):
 probs = y_pred1[:, 1]
 auc = roc_auc_score(y_test, probs)
 print('AUC: %.2f' % auc)
-
 fpr, tpr, thresholds = roc_curve(y_test, probs)
 plot_roc_curve(fpr, tpr)
