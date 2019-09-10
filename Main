@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from random import seed
 from random import random
+import nltk
 from sklearn.neural_network import MLPClassifier
 
 realfile = open("real_reviews.txt","r+",encoding="utf8") 
@@ -37,6 +37,37 @@ for i in rows:
 df["sort"] = sorder
 df = df.sort_values(by="sort")
 df = df.reset_index(drop=True)
+
+realreview=[]
+for i in df['Review']:
+    i = i.split(' ')
+    for j in i:
+        realreview.append(j)
+        
+realcount=[]
+for i in realreview:
+    i = i.split(' ')
+    for j in i:
+        if j not in realcount:
+            realcount.append(j)
+            
+print(len(realcount))
+
+freq = nltk.FreqDist(realreview)
+
+keyL=[]
+valL=[]
+for key, val in freq.items():
+    keyL.append(key)
+    valL.append(val)
+    
+dfWords = pd.DataFrame(index=None, columns=['key','val']) 
+dfWords['key']=keyL
+dfWords['val']=valL
+
+dfWords = dfWords.sort_values(by="val",ascending=False)
+dfWords = dfWords.reset_index(drop=True)
+print(dfWords)
 
 X_train = []
 X_test = []
@@ -91,5 +122,3 @@ model = mlp.fit(X1, y_train)
 
 score = model.score(X2, y_test)
 print(score)
-
-
